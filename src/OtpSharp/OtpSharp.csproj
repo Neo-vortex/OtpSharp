@@ -12,15 +12,13 @@
     <PackageId>OtpSharp</PackageId>
     <Version>1.0.0</Version>
     <Authors>OtpSharp Contributors</Authors>
-    <Description>
-      State-of-the-art TOTP/HOTP library for .NET 10.
-      RFC 6238 TOTP, RFC 4226 HOTP, Steam Guard, SHA1/256/384/512/SHA3,
-      configurable digits, windows, epoch, drift correction, otpauth URI support.
+    <Description>.NET lib to geenrate TOTP AND HOTP fast and secure
     </Description>
     <PackageTags>totp;hotp;otp;2fa;mfa;authenticator;rfc6238;rfc4226</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Deterministic>true</Deterministic>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
