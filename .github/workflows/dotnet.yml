@@ -1,4 +1,5 @@
 name: .NET
+
 on:
   push:
     branches: [ "main" ]
@@ -6,25 +7,50 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  changes:
     runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 10.0.x
+      - name: Detect code changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            code:
+              - '**'
+              - '!README.md'
+              - '!.github/**'
 
-    - name: Restore dependencies
-      run: dotnet restore
+  build:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
 
-    - name: Build
-      run: dotnet build --no-restore --configuration Release
+    steps:
+      - uses: actions/checkout@v4
 
-    - name: Test
-      run: dotnet test --no-build --verbosity normal --configuration Release
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
 
-    - name: Push to NuGet
-      if: github.event_name == 'push'
-      run: dotnet nuget push **/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test --no-build --verbosity normal --configuration Release
+
+      - name: Push to NuGet
+        if: github.event_name == 'push'
+        run: dotnet nuget push **/*.nupkg \
+          --api-key ${{ secrets.NUGET_API_KEY }} \
+          --source https://api.nuget.org/v3/index.json \
+          --skip-duplicate

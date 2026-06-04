@@ -1,12 +1,17 @@
-# OtpSharp
+# OtpSharper
 
 **State-of-the-art TOTP/HOTP library for .NET 10.**
 
 Full RFC 6238 (TOTP) and RFC 4226 (HOTP) compliance, Steam Guard support, multiple HMAC algorithms, configurable validation windows, NTP drift correction, `otpauth://` URI support, brute-force backoff protection, and a rich fluent API — built for correctness, performance, and security.
 
+Install :
+```
+dotnet add package OtpSharper --version 1.0.0
+```
+
 [![.NET](https://img.shields.io/badge/.NET-10.0-purple)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![NuGet](https://img.shields.io/badge/NuGet-1.0.0-green)](https://www.nuget.org/packages/OtpSharp)
+[![NuGet](https://img.shields.io/badge/NuGet-1.0.0-green)](https://www.nuget.org/packages/OtpSharperer)
 
 ---
 
@@ -53,7 +58,7 @@ Full RFC 6238 (TOTP) and RFC 4226 (HOTP) compliance, Steam Guard support, multip
 ## Installation
 
 ```shell
-dotnet add package OtpSharp
+dotnet add package OtpSharper
 ```
 
 **Requirements:** .NET 10.0+
@@ -65,7 +70,7 @@ dotnet add package OtpSharp
 ### New User Enrollment (simplest path)
 
 ```csharp
-using OtpSharp;
+using OtpSharper;
 
 // Generate a new secret and configure TOTP for a user
 var manager = OtpManager.Create("alice@example.com", issuer: "MyApp");
@@ -139,7 +144,7 @@ foreach (var (offset, code) in window)
 ## HOTP (Counter-Based)
 
 ```csharp
-using OtpSharp.Hotp;
+using OtpSharper.Hotp;
 
 var store = new InMemoryHotpCounterStore();
 var hotp  = new HotpGenerator(secret);
@@ -178,7 +183,7 @@ public class DbHotpCounterStore : IHotpCounterStore
 ## Steam Guard
 
 ```csharp
-using OtpSharp.Steam;
+using OtpSharper.Steam;
 
 var steam = new SteamGuardGenerator(secret);
 
@@ -193,7 +198,7 @@ bool valid = steam.Validate(userInput).IsValid;
 ## otpauth:// URI
 
 ```csharp
-using OtpSharp.Uri;
+using OtpSharper.Uri;
 
 // Build
 var uri    = OtpUri.ForTotp("alice@example.com", secret, options, issuer: "MyApp");
@@ -209,14 +214,14 @@ string qrUrl = uri.ToQrCodeImageUrl(300);
 // => https://chart.googleapis.com/chart?chs=300x300&chld=M|0&cht=qr&chl=otpauth%3A%2F%2F...
 ```
 
-> **Note:** OtpSharp is the only .NET OTP library in this benchmark comparison that includes a built-in `otpauth://` URI parser.
+> **Note:** OtpSharper is the only .NET OTP library in this benchmark comparison that includes a built-in `otpauth://` URI parser.
 
 ---
 
 ## Clock Drift Correction
 
 ```csharp
-using OtpSharp.Sync;
+using OtpSharper.Sync;
 
 // Measure drift vs NTP
 ClockDriftResult drift = await ClockSync.MeasureDriftAsync("pool.ntp.org");
@@ -330,16 +335,16 @@ else
 |---|---|---|
 | Google Authenticator compatibility | SHA1 | RFC-mandated; universal support |
 | New systems / higher security | SHA256 | Stronger, still widely supported |
-| Maximum security | SHA512 or SHA3-512 | Future-proof; OtpSharp exclusive for SHA3 |
+| Maximum security | SHA512 or SHA3-512 | Future-proof; OtpSharper exclusive for SHA3 |
 
 ---
 
 ## Project Structure
 
 ```
-OtpSharp/
+OtpSharper/
 ├── src/
-│   └── OtpSharp/
+│   └── OtpSharper/
 │       ├── Abstractions/
 │       │   ├── OtpBackoffPolicy.cs        # Brute-force lockout
 │       │   ├── TotpValidationService.cs   # High-level validation service
@@ -372,16 +377,16 @@ OtpSharp/
 │       │   └── OtpUri.cs                  # otpauth:// builder, parser, QR URL
 │       ├── GlobalUsings.cs
 │       ├── OtpManager.cs                  # High-level enrollment + validation facade
-│       └── OtpSharp.csproj
+│       └── OtpSharper.csproj
 ├── tests/
-│   └── OtpSharp.Tests/
+│   └── OtpSharper.Tests/
 │       ├── AbstractionTests.cs            # Backoff policy tests
 │       ├── Base32AndUriTests.cs           # Base32 codec + URI round-trip tests
 │       ├── HotpTests.cs                   # RFC 4226 test vectors
 │       ├── SteamGuardTests.cs             # Steam Guard output tests
 │       ├── TotpTests.cs                   # RFC 6238 test vectors + window tests
-│       └── OtpSharp.Tests.csproj
-├── OtpSharp.Benchmark/
+│       └── OtpSharper.Tests.csproj
+├── OtpSharper.Benchmark/
 │   ├── AlgorithmBenchmarks.cs             # Per-algorithm TOTP throughput
 │   ├── Base32Benchmarks.cs                # Base32 encode/decode at various key sizes
 │   ├── HotpGenerationBenchmarks.cs        # HOTP generation at various counters
@@ -390,8 +395,8 @@ OtpSharp/
 │   ├── TotpGenerationBenchmarks.cs        # Steady-state TOTP generation
 │   ├── TotpValidationBenchmarks.cs        # Server-side validation hot path
 │   ├── Program.cs
-│   └── OtpSharp.Benchmark.csproj
-├── OtpSharp.sln
+│   └── OtpSharper.Benchmark.csproj
+├── OtpSharper.sln
 └── LICENSE
 ```
 
@@ -399,12 +404,12 @@ OtpSharp/
 
 ## Benchmarks
 
-Benchmarks compare OtpSharp against [Otp.NET](https://github.com/kspearrin/Otp.NET) (v1.4.1), the most widely-used .NET OTP library. All tests run on .NET 10.0 using [BenchmarkDotNet](https://benchmarkdotnet.org/) 0.15.8 in Release mode with JIT optimizations enforced.
+Benchmarks compare OtpSharper against [Otp.NET](https://github.com/kspearrin/Otp.NET) (v1.4.1), the most widely-used .NET OTP library. All tests run on .NET 10.0 using [BenchmarkDotNet](https://benchmarkdotnet.org/) 0.15.8 in Release mode with JIT optimizations enforced.
 
 ### Running the Benchmarks
 
 ```shell
-cd OtpSharp.Benchmark
+cd OtpSharper.Benchmark
 dotnet run -c Release
 ```
 
@@ -415,29 +420,29 @@ These benchmarks measure the **cold path** — relevant for stateless APIs that 
 | Method | Categories | Mean | Error | StdDev | Ratio | RatioSD | Allocated | Alloc Ratio |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
 | Otp.NET | Setup_And_Generate | 2,933.23 ns | 40.393 ns | 35.808 ns | baseline | | 960 B | |
-| OtpSharp | Setup_And_Generate | 1,510.06 ns | 14.997 ns | 12.523 ns | 1.94x faster | 0.03x | 736 B | 1.30x less |
+| OtpSharper | Setup_And_Generate | 1,510.06 ns | 14.997 ns | 12.523 ns | 1.94x faster | 0.03x | 736 B | 1.30x less |
 | | | | | | | | | |
 | Otp.NET | Setup_FromBase32_Generate | 3,233.58 ns | 27.413 ns | 22.891 ns | baseline | | 1008 B | |
-| OtpSharp | Setup_FromBase32_Generate | 1,687.82 ns | 22.657 ns | 20.085 ns | 1.92x faster | 0.03x | 784 B | 1.29x less |
+| OtpSharper | Setup_FromBase32_Generate | 1,687.82 ns | 22.657 ns | 20.085 ns | 1.92x faster | 0.03x | 784 B | 1.29x less |
 | | | | | | | | | |
 | Otp.NET | Setup_ObjectCreation | 61.45 ns | 1.529 ns | 1.277 ns | baseline | | 168 B | |
-| OtpSharp | Setup_ObjectCreation | 155.67 ns | 6.084 ns | 5.080 ns | 2.53x slower | 0.09x | 192 B | 1.14x more |
+| OtpSharper | Setup_ObjectCreation | 155.67 ns | 6.084 ns | 5.080 ns | 2.53x slower | 0.09x | 192 B | 1.14x more |
 
 ### Benchmark Interpretation
 
 #### `Setup_And_Generate` — ~1.94x faster, ~1.30x less memory
 
-This scenario constructs the TOTP object and computes a code in one shot, simulating a **stateless server** that doesn't cache generator instances (a common pattern in microservices and serverless functions). OtpSharp is nearly twice as fast here. In a system processing thousands of 2FA verifications per second, this directly translates to throughput.
+This scenario constructs the TOTP object and computes a code in one shot, simulating a **stateless server** that doesn't cache generator instances (a common pattern in microservices and serverless functions). OtpSharper is nearly twice as fast here. In a system processing thousands of 2FA verifications per second, this directly translates to throughput.
 
 #### `Setup_FromBase32_Generate` — ~1.92x faster, ~1.29x less memory
 
-Same as above but starting from a Base32-encoded secret string — the realistic path when a stored secret is read from a database and decoded before use. OtpSharp's combined Base32 decode + HMAC compute pipeline is more efficient than Otp.NET's equivalent. Memory savings (~220 bytes per call) also reduce GC pressure in high-throughput scenarios.
+Same as above but starting from a Base32-encoded secret string — the realistic path when a stored secret is read from a database and decoded before use. OtpSharper's combined Base32 decode + HMAC compute pipeline is more efficient than Otp.NET's equivalent. Memory savings (~220 bytes per call) also reduce GC pressure in high-throughput scenarios.
 
 #### `Setup_ObjectCreation` — 2.53x slower, 1.14x more memory
 
-When creating a generator object alone (with no code generation), OtpSharp is slower. This is an intentional trade-off: `OtpSecret` performs **GC pinning** at construction time to protect key material from being moved or scanned in memory. This extra work during object creation pays a small upfront cost that enables the secure zeroing-on-dispose behaviour. For any scenario that actually generates or validates a code — which is every real-world use — the pinning overhead is amortised and OtpSharp wins overall (see the two rows above).
+When creating a generator object alone (with no code generation), OtpSharper is slower. This is an intentional trade-off: `OtpSecret` performs **GC pinning** at construction time to protect key material from being moved or scanned in memory. This extra work during object creation pays a small upfront cost that enables the secure zeroing-on-dispose behaviour. For any scenario that actually generates or validates a code — which is every real-world use — the pinning overhead is amortised and OtpSharper wins overall (see the two rows above).
 
-**In short:** OtpSharp is faster where it matters (end-to-end operations) and slower only in the micro-benchmark that isolates pure object allocation — a scenario that never occurs in isolation in production.
+**In short:** OtpSharper is faster where it matters (end-to-end operations) and slower only in the micro-benchmark that isolates pure object allocation — a scenario that never occurs in isolation in production.
 
 ---
 
@@ -446,7 +451,7 @@ When creating a generator object alone (with no code generation), OtpSharp is sl
 Tests use [xUnit](https://xunit.net/) and [FluentAssertions](https://fluentassertions.com/).
 
 ```shell
-cd tests/OtpSharp.Tests
+cd tests/OtpSharper.Tests
 dotnet test
 ```
 
@@ -481,4 +486,4 @@ Test coverage includes:
 
 MIT — see [LICENSE](LICENSE) for details.
 
-Copyright © 2025 OtpSharp Contributors.
+Copyright © 2026 neo-vortex
