@@ -28,6 +28,14 @@ public enum OtpUriType
 /// </remarks>
 public sealed class OtpUri
 {
+    // ── Reserved parameter names (spec-defined) ───────────────────────────────
+
+    private static readonly HashSet<string> ReservedKeys =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "secret", "issuer", "algorithm", "digits", "period", "counter",
+        };
+
     // ── Properties ────────────────────────────────────────────────────────────
 
     /// <summary>OTP type: totp or hotp.</summary>
@@ -54,17 +62,48 @@ public sealed class OtpUri
     /// <summary>Initial counter value (HOTP only).</summary>
     public long Counter { get; init; } = 0;
 
+    /// <summary>
+    /// Optional custom query parameters appended after the standard parameters.
+    /// Keys and values are URL-encoded automatically when the URI is built.
+    /// Unknown keys encountered during parsing are preserved here.
+    /// </summary>
+    /// <remarks>
+    /// Reserved parameter names (<c>secret</c>, <c>issuer</c>, <c>algorithm</c>,
+    /// <c>digits</c>, <c>period</c>, <c>counter</c>) are not allowed as keys and
+    /// will cause an <see cref="InvalidOperationException"/> when
+    /// <see cref="ToUriString"/> is called.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var uri = OtpUri.ForTotp("alice@example.com", secret, options, issuer: "MyApp",
+    ///     extraParameters: new Dictionary&lt;string, string&gt;
+    ///     {
+    ///         ["image"] = "https://example.com/logo.png",
+    ///         ["x-app-id"] = "prod-42",
+    ///     });
+    ///
+    /// // => otpauth://totp/...?secret=...&amp;image=https%3A...&amp;x-app-id=prod-42
+    /// </code>
+    /// </example>
+    public IReadOnlyDictionary<string, string> ExtraParameters { get; init; }
+        = new Dictionary<string, string>();
+
     // ── Build ─────────────────────────────────────────────────────────────────
 
     /// <summary>
     /// Builds the <c>otpauth://</c> URI string.
     /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if <see cref="ExtraParameters"/> contains a reserved key name.
+    /// </exception>
     public string ToUriString()
     {
         if (string.IsNullOrEmpty(Secret))
             throw new InvalidOperationException("Secret must not be empty.");
         if (string.IsNullOrEmpty(Label))
             throw new InvalidOperationException("Label must not be empty.");
+
+        ValidateExtraParameters();
 
         string type  = Type == OtpUriType.Totp ? "totp" : "hotp";
         string label = BuildLabel();
@@ -92,6 +131,14 @@ public sealed class OtpUri
         if (Type == OtpUriType.Hotp)
             sb.Append("&counter=").Append(Counter);
 
+        foreach (var (key, value) in ExtraParameters)
+        {
+            sb.Append('&')
+              .Append(HttpUtility.UrlEncode(key))
+              .Append('=')
+              .Append(HttpUtility.UrlEncode(value));
+        }
+
         return sb.ToString();
     }
 
@@ -99,6 +146,8 @@ public sealed class OtpUri
 
     /// <summary>
     /// Parses an <c>otpauth://</c> URI string into an <see cref="OtpUri"/>.
+    /// Any query parameters not defined by the spec are captured in
+    /// <see cref="ExtraParameters"/>.
     /// </summary>
     /// <exception cref="FormatException">Malformed URI.</exception>
     public static OtpUri Parse(string uri)
@@ -110,6 +159,8 @@ public sealed class OtpUri
 
     /// <summary>
     /// Attempts to parse an <c>otpauth://</c> URI string.
+    /// Any query parameters not defined by the spec are captured in
+    /// <see cref="ExtraParameters"/>.
     /// </summary>
     public static bool TryParse(string uri, out OtpUri? result, out string error)
     {
@@ -192,16 +243,25 @@ public sealed class OtpUri
             return false;
         }
 
+        // Collect unknown keys into ExtraParameters
+        var extra = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (string? key in query.AllKeys)
+        {
+            if (key is not null && !ReservedKeys.Contains(key))
+                extra[key] = query[key] ?? string.Empty;
+        }
+
         result = new OtpUri
         {
-            Type      = type,
-            Label     = label,
-            Issuer    = !string.IsNullOrEmpty(issuerQ) ? issuerQ : (issuerFromLabel.Length > 0 ? issuerFromLabel : null),
-            Secret    = secret,
-            Algorithm = algorithm,
-            Digits    = digits,
-            Period    = period,
-            Counter   = counter,
+            Type            = type,
+            Label           = label,
+            Issuer          = !string.IsNullOrEmpty(issuerQ) ? issuerQ : (issuerFromLabel.Length > 0 ? issuerFromLabel : null),
+            Secret          = secret,
+            Algorithm       = algorithm,
+            Digits          = digits,
+            Period          = period,
+            Counter         = counter,
+            ExtraParameters = extra,
         };
         return true;
     }
@@ -211,45 +271,66 @@ public sealed class OtpUri
     /// <summary>
     /// Creates a TOTP URI from a <see cref="TotpOptions"/> and secret.
     /// </summary>
+    /// <param name="label">Account label (e.g., user@example.com).</param>
+    /// <param name="secret">The OTP secret.</param>
+    /// <param name="options">TOTP options. Null = RFC 6238 defaults.</param>
+    /// <param name="issuer">Application/service name.</param>
+    /// <param name="extraParameters">
+    /// Optional custom query parameters to include in the URI.
+    /// See <see cref="ExtraParameters"/> for constraints.
+    /// </param>
     public static OtpUri ForTotp(
         string label,
         OtpSecret secret,
         TotpOptions? options = null,
-        string? issuer = null)
+        string? issuer = null,
+        IReadOnlyDictionary<string, string>? extraParameters = null)
     {
         options ??= TotpOptions.Default;
         return new OtpUri
         {
-            Type      = OtpUriType.Totp,
-            Label     = label,
-            Issuer    = issuer,
-            Secret    = secret.ToBase32(padOutput: false),
-            Algorithm = options.Algorithm,
-            Digits    = options.Digits,
-            Period    = options.StepSeconds,
+            Type            = OtpUriType.Totp,
+            Label           = label,
+            Issuer          = issuer,
+            Secret          = secret.ToBase32(padOutput: false),
+            Algorithm       = options.Algorithm,
+            Digits          = options.Digits,
+            Period          = options.StepSeconds,
+            ExtraParameters = extraParameters ?? new Dictionary<string, string>(),
         };
     }
 
     /// <summary>
     /// Creates an HOTP URI from a <see cref="HotpOptions"/> and secret.
     /// </summary>
+    /// <param name="label">Account label (e.g., user@example.com).</param>
+    /// <param name="secret">The OTP secret.</param>
+    /// <param name="counter">Initial counter value.</param>
+    /// <param name="options">HOTP options. Null = RFC 4226 defaults.</param>
+    /// <param name="issuer">Application/service name.</param>
+    /// <param name="extraParameters">
+    /// Optional custom query parameters to include in the URI.
+    /// See <see cref="ExtraParameters"/> for constraints.
+    /// </param>
     public static OtpUri ForHotp(
         string label,
         OtpSecret secret,
         long counter = 0,
         HotpOptions? options = null,
-        string? issuer = null)
+        string? issuer = null,
+        IReadOnlyDictionary<string, string>? extraParameters = null)
     {
         options ??= HotpOptions.Default;
         return new OtpUri
         {
-            Type      = OtpUriType.Hotp,
-            Label     = label,
-            Issuer    = issuer,
-            Secret    = secret.ToBase32(padOutput: false),
-            Algorithm = options.Algorithm,
-            Digits    = options.Digits,
-            Counter   = counter,
+            Type            = OtpUriType.Hotp,
+            Label           = label,
+            Issuer          = issuer,
+            Secret          = secret.ToBase32(padOutput: false),
+            Algorithm       = options.Algorithm,
+            Digits          = options.Digits,
+            Counter         = counter,
+            ExtraParameters = extraParameters ?? new Dictionary<string, string>(),
         };
     }
 
@@ -312,6 +393,21 @@ public sealed class OtpUri
         if (!string.IsNullOrEmpty(Issuer))
             return HttpUtility.UrlEncode(Issuer).Replace("+", "%20") + ":" + label;
         return label;
+    }
+
+    /// <summary>
+    /// Throws if any key in <see cref="ExtraParameters"/> clashes with a reserved
+    /// spec-defined parameter name.
+    /// </summary>
+    private void ValidateExtraParameters()
+    {
+        foreach (string key in ExtraParameters.Keys)
+        {
+            if (ReservedKeys.Contains(key))
+                throw new InvalidOperationException(
+                    $"'{key}' is a reserved otpauth parameter name and cannot be used in ExtraParameters. " +
+                    $"Reserved names are: {string.Join(", ", ReservedKeys)}.");
+        }
     }
 
     /// <inheritdoc />
