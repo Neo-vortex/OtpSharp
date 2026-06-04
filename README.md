@@ -4,9 +4,14 @@
 
 Full RFC 6238 (TOTP) and RFC 4226 (HOTP) compliance, Steam Guard support, multiple HMAC algorithms, configurable validation windows, NTP drift correction, `otpauth://` URI support, brute-force backoff protection, and a rich fluent API — built for correctness, performance, and security.
 
+Install :
+```
+dotnet add package OtpSharper --version 1.0.0
+```
+
 [![.NET](https://img.shields.io/badge/.NET-10.0-purple)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![NuGet](https://img.shields.io/badge/NuGet-1.0.0-green)](https://www.nuget.org/packages/OtpSharp)
+[![NuGet](https://img.shields.io/badge/NuGet-1.0.0-green)](https://www.nuget.org/packages/OtpSharper)
 
 ---
 
