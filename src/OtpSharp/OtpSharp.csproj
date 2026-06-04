@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+
+    <!-- Package metadata -->
+    <PackageId>OtpSharp</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>OtpSharp Contributors</Authors>
+    <Description>
+      State-of-the-art TOTP/HOTP library for .NET 10.
+      RFC 6238 TOTP, RFC 4226 HOTP, Steam Guard, SHA1/256/384/512/SHA3,
+      configurable digits, windows, epoch, drift correction, otpauth URI support.
+    </Description>
+    <PackageTags>totp;hotp;otp;2fa;mfa;authenticator;rfc6238;rfc4226</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+  </ItemGroup>
+
+</Project>
