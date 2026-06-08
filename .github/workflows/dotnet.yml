@@ -54,10 +54,7 @@ jobs:
 
       - name: Pack
         run: |
-          dotnet pack \
-            --configuration Release \
-            --no-build \
-            --output ./artifacts
+          dotnet pack --configuration Release --no-build --output ./artifacts
 
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
@@ -68,10 +65,7 @@ jobs:
       - name: Push to NuGet
         if: github.event_name == 'push'
         run: |
-          dotnet nuget push "artifacts/*.nupkg" \
-            --api-key "${{ secrets.NUGET_API_KEY }}" \
-            --source https://api.nuget.org/v3/index.json \
-            --skip-duplicate
+          dotnet nuget push "artifacts/*.nupkg" --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
 
       - name: Create GitHub Release
         if: github.event_name == 'push'
